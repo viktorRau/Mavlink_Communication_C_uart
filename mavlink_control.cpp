@@ -221,6 +221,11 @@ commands_EKF_Position(Autopilot_Interface &api)
 
 	// Wait for 8 seconds, check position
 
+		for (int i=0; i < 8; i++)
+	{
+		sleep(1);
+	}
+
 	printf("\n");
 
 
