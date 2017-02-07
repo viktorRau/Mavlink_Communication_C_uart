@@ -130,7 +130,11 @@ top (int argc, char **argv)
 	 * This is where the port is opened, and read and write threads are started.
 	 */
 	serial_port.start();
-	autopilot_interface.start();
+	//autopilot_interface.start();
+    float EKF_Position_x, EKF_Position_y;
+    EKF_Position_x = 2.456;
+    EKF_Position_y = 3.456;
+	autopilot_interface.start_EKF_Position(EKF_Position_x,EKF_Position_y);
 
 
 	// --------------------------------------------------------------------------
@@ -140,8 +144,8 @@ top (int argc, char **argv)
 	/*
 	 * Now we can implement the algorithm we want on top of the autopilot interface
 	 */
-	commands(autopilot_interface);
-
+	commands_EKF_Position(autopilot_interface);
+	//commands(autopilot_interface);
 
 	// --------------------------------------------------------------------------
 	//   THREAD and PORT SHUTDOWN
@@ -167,6 +171,82 @@ top (int argc, char **argv)
 // ------------------------------------------------------------------------------
 //   COMMANDS
 // ------------------------------------------------------------------------------
+
+void
+commands_EKF_Position(Autopilot_Interface &api)
+{
+
+	// --------------------------------------------------------------------------
+	//   START OFFBOARD MODE
+	// --------------------------------------------------------------------------
+
+	api.enable_offboard_control();
+	usleep(100); // give some time to let it sink in
+
+	// now the autopilot is accepting setpoint commands
+
+
+	// --------------------------------------------------------------------------
+	//   SEND OFFBOARD COMMANDS
+	// --------------------------------------------------------------------------
+	printf("SEND OFFBOARD COMMANDS\n");
+
+	// initialize command data strtuctures
+	mavlink_set_position_target_local_ned_t sp;
+	mavlink_set_position_target_local_ned_t ip = api.initial_position;
+
+	// autopilot_interface.h provides some helper functions to build the command
+
+
+	// Example 1 - Set Velocity
+//	set_velocity( -1.0       , // [m/s]
+//				  -1.0       , // [m/s]
+//				   0.0       , // [m/s]
+//				   sp        );
+
+	// Example 2 - Set Position
+	 set_position( ip.x  , // [m]
+			 	   ip.y  , // [m]
+				   ip.z       , // [m]
+				   sp         );
+
+
+	// Example 1.2 - Append Yaw Command
+	//set_yaw( ip.yaw , // [rad]
+	//		 sp     );
+
+	// SEND THE COMMAND
+	api.update_setpoint(sp);
+	// NOW pixhawk will try to move
+
+	// Wait for 8 seconds, check position
+	for (int i=0; i < 8; i++)
+	{
+		mavlink_local_position_ned_t pos = api.current_messages.local_position_ned;
+		printf("%i CURRENT POSITION XYZ = [ % .4f , % .4f , % .4f ] \n", i, pos.x, pos.y, pos.z);
+		sleep(1);
+	}
+
+	printf("\n");
+
+
+	// --------------------------------------------------------------------------
+	//   STOP OFFBOARD MODE
+	// --------------------------------------------------------------------------
+
+	api.disable_offboard_control();
+
+
+
+
+	// --------------------------------------------------------------------------
+	//   END OF COMMANDS
+	// --------------------------------------------------------------------------
+
+	return;
+
+}
+
 
 void
 commands(Autopilot_Interface &api)
@@ -260,7 +340,6 @@ commands(Autopilot_Interface &api)
 	printf("    temperature: %f C \n"       , imu.temperature );
 
 	printf("\n");
-
 
 	// --------------------------------------------------------------------------
 	//   END OF COMMANDS

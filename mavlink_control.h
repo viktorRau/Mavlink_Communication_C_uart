@@ -81,6 +81,7 @@ int main(int argc, char **argv);
 int top(int argc, char **argv);
 
 void commands(Autopilot_Interface &autopilot_interface);
+void commands_EKF_Position(Autopilot_Interface &autopilot_interface);
 void parse_commandline(int argc, char **argv, char *&uart_name, int &baudrate);
 
 // quit handler

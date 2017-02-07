@@ -113,7 +113,7 @@ set_velocity(float vx, float vy, float vz, mavlink_set_position_target_local_ned
 	sp.vy  = vy;
 	sp.vz  = vz;
 
-	//printf("VELOCITY SETPOINT UVW = [ %.4f , %.4f , %.4f ] \n", sp.vx, sp.vy, sp.vz);
+	printf("VELOCITY SETPOINT UVW = [ %.4f , %.4f , %.4f ] \n", sp.vx, sp.vy, sp.vz);
 
 }
 
@@ -224,6 +224,13 @@ Autopilot_Interface::
 update_setpoint(mavlink_set_position_target_local_ned_t setpoint)
 {
 	current_setpoint = setpoint;
+}
+
+void
+Autopilot_Interface::
+update_EKF_Position(mavlink_set_position_target_local_ned_t EKF_Position)
+{
+	current_setpoint = EKF_Position;
 }
 
 
@@ -676,7 +683,134 @@ start()
 	return;
 
 }
+// ------------------------------------------------------------------------------
+//   STARTUP EKF_Position
+// ------------------------------------------------------------------------------
+void
+Autopilot_Interface::
+start_EKF_Position(float EKF_Position_x, float EKF_Position_y)
+{
+	int result;
 
+	// --------------------------------------------------------------------------
+	//   CHECK SERIAL PORT
+	// --------------------------------------------------------------------------
+
+	if ( serial_port->status != 1 ) // SERIAL_PORT_OPEN
+	{
+		fprintf(stderr,"ERROR: serial port not open\n");
+		throw 1;
+	}
+
+
+	// --------------------------------------------------------------------------
+	//   READ THREAD
+	// --------------------------------------------------------------------------
+
+	printf("START READ THREAD \n");
+
+	result = pthread_create( &read_tid, NULL, &start_autopilot_interface_read_thread, this );
+	if ( result ) throw result;
+
+	// now we're reading messages
+	printf("\n");
+
+
+	// --------------------------------------------------------------------------
+	//   CHECK FOR MESSAGES
+	// --------------------------------------------------------------------------
+
+	printf("CHECK FOR MESSAGES\n");
+
+	while ( not current_messages.sysid )
+	{
+		if ( time_to_exit )
+			return;
+		usleep(500000); // check at 2Hz
+	}
+
+	printf("Found\n");
+
+	// now we know autopilot is sending messages
+	printf("\n");
+
+
+	// --------------------------------------------------------------------------
+	//   GET SYSTEM and COMPONENT IDs
+	// --------------------------------------------------------------------------
+
+	// This comes from the heartbeat, which in theory should only come from
+	// the autopilot we're directly connected to it.  If there is more than one
+	// vehicle then we can't expect to discover id's like this.
+	// In which case set the id's manually.
+
+	// System ID
+	if ( not system_id )
+	{
+		system_id = current_messages.sysid;
+		printf("GOT VEHICLE SYSTEM ID: %i\n", system_id );
+	}
+
+	// Component ID
+	if ( not autopilot_id )
+	{
+		autopilot_id = current_messages.compid;
+		printf("GOT AUTOPILOT COMPONENT ID: %i\n", autopilot_id);
+		printf("\n");
+	}
+
+
+	// --------------------------------------------------------------------------
+	//   GET INITIAL POSITION
+	// --------------------------------------------------------------------------
+
+	// Wait for initial position ned
+	while ( not ( current_messages.time_stamps.local_position_ned &&
+				  current_messages.time_stamps.attitude            )  )
+	{
+		if ( time_to_exit )
+			return;
+		usleep(500000);
+	}
+
+	// copy initial position ned
+	Mavlink_Messages local_data = current_messages;
+	initial_position.x        = EKF_Position_x;
+	initial_position.y        = EKF_Position_y;
+	initial_position.z        = local_data.local_position_ned.z;
+	initial_position.vx       = local_data.local_position_ned.vx;
+	initial_position.vy       = local_data.local_position_ned.vy;
+	initial_position.vz       = local_data.local_position_ned.vz;
+	initial_position.yaw      = local_data.attitude.yaw;
+	initial_position.yaw_rate = local_data.attitude.yawspeed;
+
+	printf("INITIAL POSITION XYZ = [ %.4f , %.4f  ] \n", initial_position.x, initial_position.y);
+	//printf("INITIAL POSITION YAW = %.4f \n", initial_position.yaw);
+	printf("\n");
+
+	// we need this before starting the write thread
+
+
+	// --------------------------------------------------------------------------
+	//   WRITE THREAD
+	// --------------------------------------------------------------------------
+	printf("START WRITE THREAD \n");
+
+	result = pthread_create( &write_tid, NULL, &start_autopilot_interface_write_thread, this );
+	if ( result ) throw result;
+
+	// wait for it to be started
+	while ( not writing_status )
+		usleep(100000); // 10Hz
+
+	// now we're streaming setpoint commands
+	printf("\n");
+
+
+	// Done!
+	return;
+
+}
 
 // ------------------------------------------------------------------------------
 //   SHUTDOWN
@@ -741,6 +875,24 @@ start_write_thread(void)
 	else
 	{
 		write_thread();
+		return;
+	}
+
+}
+
+void
+Autopilot_Interface::
+start_write_thread_EKF_Position(void)
+{
+	if ( not writing_status == false )
+	{
+		fprintf(stderr,"write thread already running\n");
+		return;
+	}
+
+	else
+	{
+		write_thread_EKF_Position();
 		return;
 	}
 
@@ -832,6 +984,45 @@ write_thread(void)
 
 }
 
+void
+Autopilot_Interface::
+write_thread_EKF_Position(void)
+{
+	// signal startup
+	writing_status = 2;
+
+	// prepare an initial setpoint, just stay put
+	mavlink_set_position_target_local_ned_t pos;
+	pos.type_mask = MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_VELOCITY &
+				   MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_YAW_RATE;
+	pos.coordinate_frame = MAV_FRAME_LOCAL_NED;
+	pos.vx       = 0.0;
+	pos.vy       = 0.0;
+	pos.vz       = 0.0;
+	pos.yaw_rate = 0.0;
+
+	// set position target
+	current_setpoint = pos;
+
+	// write a message and signal writing
+	write_setpoint();
+	writing_status = true;
+
+	// Pixhawk needs to see off-board commands at minimum 2Hz,
+	// otherwise it will go into fail safe
+	while ( !time_to_exit )
+	{
+		usleep(250000);   // Stream at 4Hz
+		write_setpoint();
+	}
+
+	// signal end
+	writing_status = false;
+
+	return;
+
+}
+
 // End Autopilot_Interface
 
 
@@ -865,5 +1056,17 @@ start_autopilot_interface_write_thread(void *args)
 	return NULL;
 }
 
+void*
+start_autopilot_interface_write_thread_EKF_Position(void *args)
+{
+	// takes an autopilot object argument
+	Autopilot_Interface *autopilot_interface = (Autopilot_Interface *)args;
+
+	// run the object's read thread
+	autopilot_interface->start_write_thread_EKF_Position();
+
+	// done!
+	return NULL;
+}
 
 

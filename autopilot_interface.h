@@ -122,6 +122,7 @@ void set_velocity(float vx, float vy, float vz, mavlink_set_position_target_loca
 void set_acceleration(float ax, float ay, float az, mavlink_set_position_target_local_ned_t &sp);
 void set_yaw(float yaw, mavlink_set_position_target_local_ned_t &sp);
 void set_yaw_rate(float yaw_rate, mavlink_set_position_target_local_ned_t &sp);
+//void set_EKF_Position(float x, float y, float z, mavlink_set_EKF_Position &sp);
 
 void* start_autopilot_interface_read_thread(void *args);
 void* start_autopilot_interface_write_thread(void *args);
@@ -148,6 +149,8 @@ struct Time_Stamps
 	uint64_t position_target_global_int;
 	uint64_t highres_imu;
 	uint64_t attitude;
+	//uint64_t EKF_Matrix;
+	//uint64_t EKF_Position;
 
 	void
 	reset_timestamps()
@@ -162,6 +165,8 @@ struct Time_Stamps
 		position_target_global_int = 0;
 		highres_imu = 0;
 		attitude = 0;
+	//	EKF_Matrix = 0;
+	//  EKF_Position = 0;
 	}
 
 };
@@ -205,7 +210,8 @@ struct Mavlink_Messages {
 	mavlink_attitude_t attitude;
 
 	// System Parameters?
-
+   //mavlink_EKF_Matrix EKF_Matrix;
+   // mavlink_EKF_Position EKF_Position;
 
 	// Time Stamps
 	Time_Stamps time_stamps;
@@ -258,6 +264,7 @@ public:
 	mavlink_set_position_target_local_ned_t initial_position;
 
 	void update_setpoint(mavlink_set_position_target_local_ned_t setpoint);
+	void update_EKF_Position(mavlink_set_position_target_local_ned_t EKF_Position);
 	void read_messages();
 	int  write_message(mavlink_message_t message);
 
@@ -265,10 +272,12 @@ public:
 	void disable_offboard_control();
 
 	void start();
+	void start_EKF_Position(float EKF_Position_x, float EKF_Position_y);
 	void stop();
 
 	void start_read_thread();
 	void start_write_thread(void);
+	void start_write_thread_EKF_Position(void);
 
 	void handle_quit( int sig );
 
@@ -286,6 +295,7 @@ private:
 
 	void read_thread();
 	void write_thread(void);
+	void write_thread_EKF_Position(void);
 
 	int toggle_offboard_control( bool flag );
 	void write_setpoint();
