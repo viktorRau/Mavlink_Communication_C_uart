@@ -94,6 +94,30 @@ set_position(float x, float y, float z, mavlink_set_position_target_local_ned_t 
 	printf("POSITION SETPOINT XYZ = [ %.4f , %.4f , %.4f ] \n", sp.x, sp.y, sp.z);
 
 }
+/*
+ * Set target local ned EKFDATA
+ *
+ * Modifies a mavlink_set_position_target_local_ned_t struct with target X Y Z VX VY VZ
+
+ */
+void
+set_EKF_Data(float x, float y, float z, float vx, float vy, float vz, mavlink_set_position_target_local_ned_t &sp)
+{
+	sp.type_mask =
+		MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_POSITION;
+
+	sp.coordinate_frame = MAV_FRAME_LOCAL_NED;
+
+	sp.x   = x;
+	sp.y   = y;
+	sp.z   = z;
+	sp.vx  = vx;
+	sp.vy  = vy;
+	sp.vz  = vz;
+
+	printf("EKF SETPOINT  = [ %.4f , %.4f , %.4f, %.4f , %.4f , %.4f ] \n", sp.x, sp.y, sp.z, sp.vx, sp.vy, sp.vz);
+
+}
 
 /*
  * Set target local ned velocity
@@ -688,7 +712,7 @@ start()
 // ------------------------------------------------------------------------------
 void
 Autopilot_Interface::
-start_EKF_Position(float EKF_Position_x, float EKF_Position_y)
+start_EKF_Position(float EKF_Position_x, float EKF_Position_y, float EKF_Filter1, float EKF_Filter2, float EKF_Filter3, float EKF_Filter4)
 {
 	int result;
 
@@ -777,14 +801,14 @@ start_EKF_Position(float EKF_Position_x, float EKF_Position_y)
 	Mavlink_Messages local_data = current_messages;
 	initial_position.x        = EKF_Position_x;
 	initial_position.y        = EKF_Position_y;
-	initial_position.z        = local_data.local_position_ned.z;
-	initial_position.vx       = local_data.local_position_ned.vx;
-	initial_position.vy       = local_data.local_position_ned.vy;
-	initial_position.vz       = local_data.local_position_ned.vz;
+	initial_position.z        = EKF_Filter1;
+	initial_position.vx       = EKF_Filter2;
+	initial_position.vy       = EKF_Filter3;
+	initial_position.vz       = EKF_Filter4;
 	initial_position.yaw      = local_data.attitude.yaw;
 	initial_position.yaw_rate = local_data.attitude.yawspeed;
 
-	printf("INITIAL POSITION XYZ = [ %.4f , %.4f  ] \n", initial_position.x, initial_position.y);
+	printf("INITIAL POSITION XYZ = [ %.4f , %.4f, %.4f, %.4f, %.4f, %.4f  ] \n", initial_position.x, initial_position.y, initial_position.z, initial_position.vx, initial_position.vy, initial_position.vz);
 	//printf("INITIAL POSITION YAW = %.4f \n", initial_position.yaw);
 	printf("\n");
 

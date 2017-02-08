@@ -118,6 +118,7 @@
 // helper functions
 uint64_t get_time_usec();
 void set_position(float x, float y, float z, mavlink_set_position_target_local_ned_t &sp);
+void set_EKF_Data(float x, float y, float z, float vx, float vy, float vz, mavlink_set_position_target_local_ned_t &sp);
 void set_velocity(float vx, float vy, float vz, mavlink_set_position_target_local_ned_t &sp);
 void set_acceleration(float ax, float ay, float az, mavlink_set_position_target_local_ned_t &sp);
 void set_yaw(float yaw, mavlink_set_position_target_local_ned_t &sp);
@@ -272,7 +273,7 @@ public:
 	void disable_offboard_control();
 
 	void start();
-	void start_EKF_Position(float EKF_Position_x, float EKF_Position_y);
+	void start_EKF_Position(float EKF_Position_x, float EKF_Position_y, float EKF_Filter1, float EKF_Filter2, float EKF_Filter3, float EKF_Filter4);
 	void stop();
 
 	void start_read_thread();

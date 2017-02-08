@@ -131,10 +131,14 @@ top (int argc, char **argv)
 	 */
 	serial_port.start();
 	//autopilot_interface.start();
-    float EKF_Position_x, EKF_Position_y;
-    EKF_Position_x = 2.456;
-    EKF_Position_y = 3.456;
-	autopilot_interface.start_EKF_Position(EKF_Position_x,EKF_Position_y);
+    float EKF_Position_x, EKF_Position_y, EKF_Filter1, EKF_Filter2, EKF_Filter3, EKF_Filter4;
+    EKF_Position_x = 1;
+    EKF_Position_y = 2;
+    EKF_Filter1 = 1;
+    EKF_Filter2 = 2;
+    EKF_Filter3 = 3;
+    EKF_Filter4 = 4;
+	autopilot_interface.start_EKF_Position(EKF_Position_x,EKF_Position_y, EKF_Filter1, EKF_Filter2, EKF_Filter3, EKF_Filter4);
 
 
 	// --------------------------------------------------------------------------
@@ -205,9 +209,12 @@ commands_EKF_Position(Autopilot_Interface &api)
 //				   sp        );
 
 	// Example 2 - Set Position
-	 set_position( ip.x  , // [m]
+	set_EKF_Data( ip.x  , // [m]
 			 	   ip.y  , // [m]
-				   ip.z       , // [m]
+				   ip.z  , // [m]
+				   ip.vx  , // [m]
+			 	   ip.vy  , // [m]
+				   ip.vz  , // [m]
 				   sp         );
 
 
@@ -223,6 +230,8 @@ commands_EKF_Position(Autopilot_Interface &api)
 
 		for (int i=0; i < 8; i++)
 	{
+		mavlink_local_position_ned_t pos = api.current_messages.local_position_ned;
+		printf("%i CURRENT POSITION XYZ = [ % .4f , % .4f , % .4f ] \n", i, pos.x, pos.y, pos.z);
 		sleep(1);
 	}
 
