@@ -131,14 +131,61 @@ top (int argc, char **argv)
 	 */
 	serial_port.start();
 	//autopilot_interface.start();
+
+
+	
+	//
+	//  TEST CALL PYTHON SCRIPT
+	// --------------------------------------------------------------------------
+#include <fstream>
+#include <iostream>
+
+ifstream infile;
+string myArray[6];
+double EKF_Data[6];
+
+for (int j=0; j<30; j++)
+{
+infile.open("/home/pi/Localization/RF_Localization_Test/EKF.txt");
+if(infile.is_open())
+{
+//infile.seekg(0L, ios::beg);
+for(int i=0; i<6; ++i)
+{	
+infile >>myArray[i];
+EKF_Data[i] = atof(myArray[i].c_str());
+cout <<"my double: "<<EKF_Data[i]<<endl;
+}
+infile.close();
+}
+
+
+
+
+//#include <stdlib.h>
+//#include <iostream>
+//using namespace std;
+//{
+//	cout <<"Executing </home/pi/Localization/RF_Localization_Test/startsession.sh> "<< endl;
+//	system("/home/pi/Localization/RF_Localization_Test/startsession.sh");
+//	return 0;
+//} 
+
+
+	// --------------------------------------------------------------------------
+	//  END TEST CALL PYTHON SCRIPT
+	// --------------------------------------------------------------------------
+
+
+
     float EKF_Position_x, EKF_Position_y, EKF_Filter1, EKF_Filter2, EKF_Filter3, EKF_Filter4;
-    EKF_Position_x = 1;
-    EKF_Position_y = 2;
-    EKF_Filter1 = 1;
-    EKF_Filter2 = 2;
-    EKF_Filter3 = 3;
-    EKF_Filter4 = 4;
-	autopilot_interface.start_EKF_Position(EKF_Position_x,EKF_Position_y, EKF_Filter1, EKF_Filter2, EKF_Filter3, EKF_Filter4);
+    EKF_Position_x = EKF_Data[0];
+    EKF_Position_y = EKF_Data[1];
+    EKF_Filter1 = EKF_Data[2];
+    EKF_Filter2 = EKF_Data[3];
+    EKF_Filter3 = EKF_Data[4];
+    EKF_Filter4 = EKF_Data[5];
+    autopilot_interface.start_EKF_Position(EKF_Position_x,EKF_Position_y, EKF_Filter1, EKF_Filter2, EKF_Filter3, EKF_Filter4);
 
 
 	// --------------------------------------------------------------------------
@@ -151,6 +198,13 @@ top (int argc, char **argv)
 	commands_EKF_Position(autopilot_interface);
 	//commands(autopilot_interface);
 
+	}
+	
+
+
+
+
+
 	// --------------------------------------------------------------------------
 	//   THREAD and PORT SHUTDOWN
 	// --------------------------------------------------------------------------
@@ -160,7 +214,7 @@ top (int argc, char **argv)
 	 */
 	autopilot_interface.stop();
 	serial_port.stop();
-
+	
 
 	// --------------------------------------------------------------------------
 	//   DONE
@@ -201,14 +255,7 @@ commands_EKF_Position(Autopilot_Interface &api)
 
 	// autopilot_interface.h provides some helper functions to build the command
 
-
-	// Example 1 - Set Velocity
-//	set_velocity( -1.0       , // [m/s]
-//				  -1.0       , // [m/s]
-//				   0.0       , // [m/s]
-//				   sp        );
-
-	// Example 2 - Set Position
+	// Example 2 - Set EKF_Data
 	set_EKF_Data( ip.x  , // [m]
 			 	   ip.y  , // [m]
 				   ip.z  , // [m]
@@ -218,24 +265,25 @@ commands_EKF_Position(Autopilot_Interface &api)
 				   sp         );
 
 
-	// Example 1.2 - Append Yaw Command
-	//set_yaw( ip.yaw , // [rad]
-	//		 sp     );
 
 	// SEND THE COMMAND
 	api.update_setpoint(sp);
 	// NOW pixhawk will try to move
 
 	// Wait for 8 seconds, check position
-
-		for (int i=0; i < 8; i++)
+//	
+	#include <iostream>
+	#include <unistd.h> //for Sleep
+	//#include <windows.h>
+		for (int i=0; i < 1; i++)
 	{
 		mavlink_local_position_ned_t pos = api.current_messages.local_position_ned;
-		printf("%i CURRENT POSITION XYZ = [ % .4f , % .4f , % .4f ] \n", i, pos.x, pos.y, pos.z);
-		sleep(1);
+		//printf("%i CURRENT POSITION XYZ = [ % .4f , % .4f , % .4f ] \n", i, pos.x, pos.y, pos.z);
+		usleep(400*1000);
 	}
 
 	printf("\n");
+	
 
 
 	// --------------------------------------------------------------------------
@@ -435,6 +483,10 @@ quit_handler( int sig )
 	exit(0);
 
 }
+
+
+
+
 
 
 // ------------------------------------------------------------------------------
