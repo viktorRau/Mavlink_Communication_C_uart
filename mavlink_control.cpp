@@ -130,13 +130,15 @@ top (int argc, char **argv)
 	 * This is where the port is opened, and read and write threads are started.
 	 */
 	serial_port.start();
-	//autopilot_interface.start();
+	autopilot_interface.start();
 
 
 	
 	//
 	//  TEST CALL PYTHON SCRIPT
-	// --------------------------------------------------------------------------
+
+   // --------------------------------------------------------------------------
+/*
 #include <fstream>
 #include <iostream>
 
@@ -158,6 +160,7 @@ cout <<"my double: "<<EKF_Data[i]<<endl;
 }
 infile.close();
 }
+*/
 
 
 
@@ -178,7 +181,7 @@ infile.close();
 
 
 
-    float EKF_Position_x, EKF_Position_y, EKF_Filter1, EKF_Filter2, EKF_Filter3, EKF_Filter4;
+ /*   float EKF_Position_x, EKF_Position_y, EKF_Filter1, EKF_Filter2, EKF_Filter3, EKF_Filter4;
     EKF_Position_x = EKF_Data[0];
     EKF_Position_y = EKF_Data[1];
     EKF_Filter1 = EKF_Data[2];
@@ -186,6 +189,8 @@ infile.close();
     EKF_Filter3 = EKF_Data[4];
     EKF_Filter4 = EKF_Data[5];
     autopilot_interface.start_EKF_Position(EKF_Position_x,EKF_Position_y, EKF_Filter1, EKF_Filter2, EKF_Filter3, EKF_Filter4);
+*/
+
 
 
 	// --------------------------------------------------------------------------
@@ -198,7 +203,7 @@ infile.close();
 	commands_EKF_Position(autopilot_interface);
 	//commands(autopilot_interface);
 
-	}
+	//}
 	
 
 
@@ -229,7 +234,106 @@ infile.close();
 // ------------------------------------------------------------------------------
 //   COMMANDS
 // ------------------------------------------------------------------------------
+void
+commands_EKF_Position(Autopilot_Interface &api)
+{
 
+//include libraries for reading the EKF.txt file and set a declaration for the necesarry variables
+#include <fstream>
+#include <iostream>
+
+    ifstream infile;
+    string myArray[6];
+    double EKF_Data[6];
+
+	// --------------------------------------------------------------------------
+	//   START OFFBOARD MODE
+	// --------------------------------------------------------------------------
+
+	api.enable_offboard_control();
+	usleep(100); // give some time to let it sink in
+
+	// now the autopilot is accepting setpoint commands
+
+
+	// --------------------------------------------------------------------------
+	//   SEND OFFBOARD COMMANDS
+	// --------------------------------------------------------------------------
+	printf("SEND OFFBOARD COMMANDS\n");
+
+	// initialize command data strtuctures
+	mavlink_set_position_target_local_ned_t sp;
+	//mavlink_set_position_target_local_ned_t ip = api.initial_position;
+
+    //Read EKF Data#
+
+
+    for (int j=0; j<100; j++) //read j-times the EKF.txt file and tries to send it via mavlink
+                             //sometimes it needs more time to send the data than to read it so it could
+                             //be that it sends less times than it reads the data
+    {
+
+    // open the EKF.txt file, set the EKF parameters to EKF_Data and close the txt file
+         infile.open("/home/pi/Localization/RF_Localization_Test/EKF.txt");
+         if(infile.is_open())
+                {
+                for(int i=0; i<6; ++i)
+                    {
+                    infile >>myArray[i];
+                    EKF_Data[i] = atof(myArray[i].c_str());
+                     }
+                 infile.close();
+                 }
+
+
+
+	// Example 2 - Set EKF_Data
+	    set_EKF_Data( EKF_Data[0]  , // X_Position
+	                EKF_Data[1]  , // Y_Position
+	                EKF_Data[2]  , // EKF Matrix [0,0]
+	                EKF_Data[3]  , // EKF Matrix [0,1]
+	                EKF_Data[4]  , // EKF Matrix [1,0]
+	                EKF_Data[5]  , // EKF Matrix [1,1]
+				   sp         );
+
+
+
+	// SEND THE COMMAND
+	    api.update_setpoint(sp);
+
+
+/*
+
+		for (int i=0; i < 1; i++)
+	{
+		mavlink_local_position_ned_t pos = api.current_messages.local_position_ned;
+		//printf("%i CURRENT POSITION XYZ = [ % .4f , % .4f , % .4f ] \n", i, pos.x, pos.y, pos.z);
+		usleep(400*1000);
+	}
+*/
+        usleep(50*1000); //sleep for x milliseconds -->(x*1000)
+	    printf("\n");
+
+    } // end the for loop which rewrite the EKF_Data variable with the EKF parameters from the EKF.txt file
+
+	// --------------------------------------------------------------------------
+	//   STOP OFFBOARD MODE
+	// --------------------------------------------------------------------------
+
+	api.disable_offboard_control();
+
+
+
+
+	// --------------------------------------------------------------------------
+	//   END OF COMMANDS
+	// --------------------------------------------------------------------------
+
+	return;
+
+}
+
+/*
 void
 commands_EKF_Position(Autopilot_Interface &api)
 {
@@ -252,6 +356,7 @@ commands_EKF_Position(Autopilot_Interface &api)
 	// initialize command data strtuctures
 	mavlink_set_position_target_local_ned_t sp;
 	mavlink_set_position_target_local_ned_t ip = api.initial_position;
+
 
 	// autopilot_interface.h provides some helper functions to build the command
 
@@ -303,7 +408,7 @@ commands_EKF_Position(Autopilot_Interface &api)
 
 }
 
-
+*/
 void
 commands(Autopilot_Interface &api)
 {
