@@ -119,6 +119,21 @@ set_EKF_Data(float x, float y, float z, float vx, float vy, float vz, mavlink_se
 
 }
 
+void
+set_EKF_Data_Test(float x, mavlink_set_position_target_local_ned_t &sp)
+{
+	sp.type_mask =
+		MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_POSITION;
+
+	sp.coordinate_frame = MAV_FRAME_LOCAL_NED;
+
+	sp.x   = x;
+
+	printf("EKF SETPOINT  = [ %.4f ] \n", sp.x);
+
+}
+
+
 /*
  * Set target local ned velocity
  *
@@ -997,7 +1012,7 @@ write_thread(void)
 	// otherwise it will go into fail safe
 	while ( !time_to_exit )
 	{
-		usleep(250000);   // Stream at 4Hz
+		usleep(50000);   // Stream at 4Hz with 250000 
 		write_setpoint();
 	}
 

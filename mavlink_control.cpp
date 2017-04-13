@@ -73,7 +73,7 @@ top (int argc, char **argv)
 #else
 	char *uart_name = (char*)"/dev/ttyUSB0";
 #endif
-	int baudrate = 57600;
+	int baudrate = 57600;//57600
 
 	// do the parse, will throw an int if it fails
 	parse_commandline(argc, argv, uart_name, baudrate);
@@ -200,8 +200,8 @@ infile.close();
 	/*
 	 * Now we can implement the algorithm we want on top of the autopilot interface
 	 */
-	commands_EKF_Position(autopilot_interface);
-	//commands(autopilot_interface);
+	//commands_EKF_Position(autopilot_interface);
+	commands(autopilot_interface);
 
 	//}
 	
@@ -265,6 +265,30 @@ commands_EKF_Position(Autopilot_Interface &api)
 	mavlink_set_position_target_local_ned_t sp;
 	//mavlink_set_position_target_local_ned_t ip = api.initial_position;
 
+// Test how many times I can read the .txt file if I Write 10 EKF_positions per second in the text file
+
+/*
+for (int n=0; n<35; ++n)
+{
+cout << n<<endl;
+   infile.open("/home/pi/Localization/RF_Localization_Test/EKF.txt");
+         if(infile.is_open())
+                {
+                for(int i=0; i<6; ++i)
+                    {
+                    infile >>myArray[i];
+                    EKF_Data[i] = atof(myArray[i].c_str());
+                     }
+                 infile.close();
+                 }
+	
+cout<<myArray[0] << endl;
+usleep(28.52*1000); 
+}*/
+
+
+
+
     //Read EKF Data#
 
 
@@ -273,7 +297,14 @@ commands_EKF_Position(Autopilot_Interface &api)
                              //be that it sends less times than it reads the data
     {
 
-    // open the EKF.txt file, set the EKF parameters to EKF_Data and close the txt file
+
+/*
+    //find out how long it takes for opening the .txt file 
+#include <time.h>
+//float times, timed;
+clock_t times = clock();
+*/  
+  // open the EKF.txt file, set the EKF parameters to EKF_Data and close the txt file
          infile.open("/home/pi/Localization/RF_Localization_Test/EKF.txt");
          if(infile.is_open())
                 {
@@ -284,7 +315,12 @@ commands_EKF_Position(Autopilot_Interface &api)
                      }
                  infile.close();
                  }
-
+/*
+clock_t timed = clock();
+clock_t dif = timed-times;
+double Time_in_Seconds = dif / (double) CLOCKS_PER_SEC;
+cout << Time_in_Seconds<<endl;
+*/
 
 
 	// Example 2 - Set EKF_Data
@@ -296,22 +332,19 @@ commands_EKF_Position(Autopilot_Interface &api)
 	                EKF_Data[5]  , // EKF Matrix [1,1]
 				   sp         );
 
+		
+	   
+		/*set_EKF_Data_Test( EKF_Data[0]  , // X_Position
+				   sp         );
+		*/
 
 
 	// SEND THE COMMAND
 	    api.update_setpoint(sp);
 
 
-/*
 
-		for (int i=0; i < 1; i++)
-	{
-		mavlink_local_position_ned_t pos = api.current_messages.local_position_ned;
-		//printf("%i CURRENT POSITION XYZ = [ % .4f , % .4f , % .4f ] \n", i, pos.x, pos.y, pos.z);
-		usleep(400*1000);
-	}
-*/
-        usleep(50*1000); //sleep for x milliseconds -->(x*1000)
+        usleep(30*1000); //sleep for x milliseconds -->(x*1000)
 	    printf("\n");
 
     } // end the for loop which rewrite the EKF_Data variable with the EKF parameters from the EKF.txt file
@@ -333,86 +366,21 @@ commands_EKF_Position(Autopilot_Interface &api)
 
 }
 
-/*
-void
-commands_EKF_Position(Autopilot_Interface &api)
-{
 
-	// --------------------------------------------------------------------------
-	//   START OFFBOARD MODE
-	// --------------------------------------------------------------------------
-
-	api.enable_offboard_control();
-	usleep(100); // give some time to let it sink in
-
-	// now the autopilot is accepting setpoint commands
-
-
-	// --------------------------------------------------------------------------
-	//   SEND OFFBOARD COMMANDS
-	// --------------------------------------------------------------------------
-	printf("SEND OFFBOARD COMMANDS\n");
-
-	// initialize command data strtuctures
-	mavlink_set_position_target_local_ned_t sp;
-	mavlink_set_position_target_local_ned_t ip = api.initial_position;
-
-
-	// autopilot_interface.h provides some helper functions to build the command
-
-	// Example 2 - Set EKF_Data
-	set_EKF_Data( ip.x  , // [m]
-			 	   ip.y  , // [m]
-				   ip.z  , // [m]
-				   ip.vx  , // [m]
-			 	   ip.vy  , // [m]
-				   ip.vz  , // [m]
-				   sp         );
-
-
-
-	// SEND THE COMMAND
-	api.update_setpoint(sp);
-	// NOW pixhawk will try to move
-
-	// Wait for 8 seconds, check position
-//	
-	#include <iostream>
-	#include <unistd.h> //for Sleep
-	//#include <windows.h>
-		for (int i=0; i < 1; i++)
-	{
-		mavlink_local_position_ned_t pos = api.current_messages.local_position_ned;
-		//printf("%i CURRENT POSITION XYZ = [ % .4f , % .4f , % .4f ] \n", i, pos.x, pos.y, pos.z);
-		usleep(400*1000);
-	}
-
-	printf("\n");
-	
-
-
-	// --------------------------------------------------------------------------
-	//   STOP OFFBOARD MODE
-	// --------------------------------------------------------------------------
-
-	api.disable_offboard_control();
-
-
-
-
-	// --------------------------------------------------------------------------
-	//   END OF COMMANDS
-	// --------------------------------------------------------------------------
-
-	return;
-
-}
-
-*/
 void
 commands(Autopilot_Interface &api)
 {
 
+	
+
+//include libraries for reading the EKF.txt file and set a declaration for the necesarry variables
+#include <fstream>
+#include <iostream>
+
+    ifstream infile;
+    string myArray[6];
+    double EKF_Data[6];
+
 	// --------------------------------------------------------------------------
 	//   START OFFBOARD MODE
 	// --------------------------------------------------------------------------
@@ -430,42 +398,50 @@ commands(Autopilot_Interface &api)
 
 	// initialize command data strtuctures
 	mavlink_set_position_target_local_ned_t sp;
-	mavlink_set_position_target_local_ned_t ip = api.initial_position;
-
-	// autopilot_interface.h provides some helper functions to build the command
 
 
-	// Example 1 - Set Velocity
-//	set_velocity( -1.0       , // [m/s]
-//				  -1.0       , // [m/s]
-//				   0.0       , // [m/s]
-//				   sp        );
 
-	// Example 2 - Set Position
-	 set_position( ip.x - 5.0 , // [m]
-			 	   ip.y - 5.0 , // [m]
-				   ip.z       , // [m]
+    for (int j=0; j<10; j++) //read j-times the EKF.txt file and tries to send it via mavlink
+                             //sometimes it needs more time to send the data than to read it so it could
+                             //be that it sends less times than it reads the data
+    {
+
+
+                for(int i=0; i<6; ++i)
+                    {
+                
+                    EKF_Data[i] = j;
+                     }
+                 
+                 
+
+
+
+	// Example 2 - Set EKF_Data
+	    set_EKF_Data( EKF_Data[0]  , // X_Position
+	                EKF_Data[1]  , // Y_Position
+	                EKF_Data[2]  , // EKF Matrix [0,0]
+	                EKF_Data[3]  , // EKF Matrix [0,1]
+	                EKF_Data[4]  , // EKF Matrix [1,0]
+	                EKF_Data[5]  , // EKF Matrix [1,1]
 				   sp         );
 
+		
+	   
+		/*set_EKF_Data_Test( EKF_Data[0]  , // X_Position
+				   sp         );
+		*/
 
-	// Example 1.2 - Append Yaw Command
-	set_yaw( ip.yaw , // [rad]
-			 sp     );
 
 	// SEND THE COMMAND
-	api.update_setpoint(sp);
-	// NOW pixhawk will try to move
+	    api.update_setpoint(sp);
 
-	// Wait for 8 seconds, check position
-	for (int i=0; i < 8; i++)
-	{
-		mavlink_local_position_ned_t pos = api.current_messages.local_position_ned;
-		printf("%i CURRENT POSITION XYZ = [ % .4f , % .4f , % .4f ] \n", i, pos.x, pos.y, pos.z);
-		sleep(1);
-	}
 
-	printf("\n");
 
+        usleep(75*1000); //sleep for x milliseconds -->(x*1000)
+	    printf("\n");
+
+    } // end the for loop which rewrite the EKF_Data variable with the EKF parameters from the EKF.txt file
 
 	// --------------------------------------------------------------------------
 	//   STOP OFFBOARD MODE
@@ -473,42 +449,18 @@ commands(Autopilot_Interface &api)
 
 	api.disable_offboard_control();
 
-	// now pixhawk isn't listening to setpoint commands
 
 
-	// --------------------------------------------------------------------------
-	//   GET A MESSAGE
-	// --------------------------------------------------------------------------
-	printf("READ SOME MESSAGES \n");
-
-	// copy current messages
-	Mavlink_Messages messages = api.current_messages;
-
-	// local position in ned frame
-	mavlink_local_position_ned_t pos = messages.local_position_ned;
-	printf("Got message LOCAL_POSITION_NED (spec: https://pixhawk.ethz.ch/mavlink/#LOCAL_POSITION_NED)\n");
-	printf("    pos  (NED):  %f %f %f (m)\n", pos.x, pos.y, pos.z );
-
-	// hires imu
-	mavlink_highres_imu_t imu = messages.highres_imu;
-	printf("Got message HIGHRES_IMU (spec: https://pixhawk.ethz.ch/mavlink/#HIGHRES_IMU)\n");
-	printf("    ap time:     %llu \n", imu.time_usec);
-	printf("    acc  (NED):  % f % f % f (m/s^2)\n", imu.xacc , imu.yacc , imu.zacc );
-	printf("    gyro (NED):  % f % f % f (rad/s)\n", imu.xgyro, imu.ygyro, imu.zgyro);
-	printf("    mag  (NED):  % f % f % f (Ga)\n"   , imu.xmag , imu.ymag , imu.zmag );
-	printf("    baro:        %f (mBar) \n"  , imu.abs_pressure);
-	printf("    altitude:    %f (m) \n"     , imu.pressure_alt);
-	printf("    temperature: %f C \n"       , imu.temperature );
-
-	printf("\n");
 
 	// --------------------------------------------------------------------------
 	//   END OF COMMANDS
 	// --------------------------------------------------------------------------
 
 	return;
-
 }
+
+
+
 
 
 // ------------------------------------------------------------------------------

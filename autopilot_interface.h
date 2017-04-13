@@ -119,6 +119,7 @@
 uint64_t get_time_usec();
 void set_position(float x, float y, float z, mavlink_set_position_target_local_ned_t &sp);
 void set_EKF_Data(float x, float y, float z, float vx, float vy, float vz, mavlink_set_position_target_local_ned_t &sp);
+void set_EKF_Data_Test(float x, mavlink_set_position_target_local_ned_t &sp);
 void set_velocity(float vx, float vy, float vz, mavlink_set_position_target_local_ned_t &sp);
 void set_acceleration(float ax, float ay, float az, mavlink_set_position_target_local_ned_t &sp);
 void set_yaw(float yaw, mavlink_set_position_target_local_ned_t &sp);
