@@ -216,7 +216,10 @@ commands_EKF_Position(Autopilot_Interface &api)
     //Read EKF Data#
 
 
-    for (int j=0; j<100; j++) //read j-times the EKF.txt file and tries to send it via mavlink
+	int i=0;
+	while (i<1)		//Read EKF Data in the loop
+
+    //for (int j=0; j<100; j++) //read j-times the EKF.txt file and tries to send it via mavlink
                              //sometimes it needs more time to send the data than to read it so it could
                              //be that it sends less times than it reads the data
     {
@@ -224,7 +227,7 @@ commands_EKF_Position(Autopilot_Interface &api)
 
 
   // open the EKF.txt file, set the EKF parameters to EKF_Data and close the txt file
-         infile.open("/home/pi/Localization/RF_Localization_Test/EKF.txt");
+         infile.open("/home/pi/src/RF_Localization/EKF.txt");
          if(infile.is_open())
                 {
                 for(int i=0; i<6; ++i)
