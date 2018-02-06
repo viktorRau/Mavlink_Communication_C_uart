@@ -187,6 +187,7 @@ commands_EKF_Position(Autopilot_Interface &api)
 
     ifstream infile;
     string myArray[6];
+    ofstream yaw_file;
     double EKF_Data[6];
 
 	// --------------------------------------------------------------------------
@@ -260,7 +261,33 @@ commands_EKF_Position(Autopilot_Interface &api)
         usleep(30*1000); //sleep for x milliseconds -->(x*1000)
 	    printf("\n");
 
-    } // end the for loop which rewrite the EKF_Data variable with the EKF parameters from the EKF.txt file
+
+            // --------------------------------------------------------------------------
+                    //   GET A MESSAGE and write it in YAW.txt
+                    // --------------------------------------------------------------------------
+                    printf("READ SOME MESSAGES \n");
+
+                    // copy current messages
+                    Mavlink_Messages messages = api.current_messages;
+
+                    // local position in ned frame
+
+                    mavlink_attitude_t att = messages.attitude;
+                    printf("Got message LOCAL_POSITION_NED (spec: https://pixhawk.ethz.ch/mavlink/#LOCAL_POSITION_NED)\n");
+                    printf("    Attitude:  %f %f %f (m)\n", att.roll, att.pitch, att.yaw );
+
+               //yaw_file.open("/home/pi/Localization/RF_Localization_Test/YAW.txt");
+                 yaw_file.open("YAW.txt");
+                        if(yaw_file.is_open()){
+                        yaw_file<<"\t"<<(double)att.yaw;
+                        yaw_file.close();
+                        }
+
+                    printf("\n");
+
+            }
+
+     // end the for loop which rewrite the EKF_Data variable with the EKF parameters from the EKF.txt file
 
 	// --------------------------------------------------------------------------
 	//   STOP OFFBOARD MODE
