@@ -401,6 +401,15 @@ read_messages()
 					break;
 				}
 
+				case MAVLINK_MSG_ID_DEBUG:
+				{
+					//printf("MAVLINK_MSG_ID_DEBUG\n");
+					mavlink_msg_debug_decode(&message, &(current_messages.debug));
+					current_messages.time_stamps.debug = get_time_usec();
+					this_timestamps.debug = current_messages.time_stamps.debug;
+					break;
+				}
+
 				default:
 				{
 					// printf("Warning, did not handle message id %i\n",message.msgid);

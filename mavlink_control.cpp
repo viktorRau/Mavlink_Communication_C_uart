@@ -274,13 +274,17 @@ commands_EKF_Position(Autopilot_Interface &api)
 
                     mavlink_attitude_t att = messages.attitude;
                     mavlink_debug_vect_t debug_vect = messages.debug_vect;
+                    mavlink_debug_vect_t debug = messages.debug;
                     printf("Got message Attitude\n");
                     printf("    Attitude:  %f %f %f (m)\n", att.roll, att.pitch, att.yaw );
+                    printf("    Debug_vect:  %f %f %f (m)\n", debug_vect.x, debug_vect.y, debug_vect.z);
+                    printf("    Debug:  %f (m)\n", debug.value);
 
                //yaw_file.open("/home/pi/Localization/RF_Localization_Test/YAW.txt");
                  yaw_file.open("YAW_r_des.txt");
                         if(yaw_file.is_open()){
-                        yaw_file<<"\t\t\t\t\t"<<(double)att.yaw<< ","<< (double)debug_vect.x<< ","<< (double)debug_vect.y;
+                        //yaw_file<<"\t"<<(double)att.yaw<< ","<< (double)debug_vect.x<< ","<< (double)debug_vect.y;
+                        yaw_file<<"\t"<<(double)att.yaw<< ","<< (double)debug.value<<;
                         yaw_file.close();
                         }
 
