@@ -273,13 +273,14 @@ commands_EKF_Position(Autopilot_Interface &api)
                     // local position in ned frame
 
                     mavlink_attitude_t att = messages.attitude;
-                    printf("Got message LOCAL_POSITION_NED (spec: https://pixhawk.ethz.ch/mavlink/#LOCAL_POSITION_NED)\n");
+                    mavlink_debug_vect_t debug_vect = messages.debug_vect;
+                    printf("Got message Attitude\n");
                     printf("    Attitude:  %f %f %f (m)\n", att.roll, att.pitch, att.yaw );
 
                //yaw_file.open("/home/pi/Localization/RF_Localization_Test/YAW.txt");
-                 yaw_file.open("YAW.txt");
+                 yaw_file.open("YAW_r_des.txt");
                         if(yaw_file.is_open()){
-                        yaw_file<<"\t"<<(double)att.yaw;
+                        yaw_file<<"\t\t\t\t\t"<<(double)att.yaw<< ","<< (double)debug_vect.x<< ","<< (double)debug_vect.y;
                         yaw_file.close();
                         }
 

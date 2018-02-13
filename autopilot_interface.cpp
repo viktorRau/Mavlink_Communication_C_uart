@@ -392,6 +392,15 @@ read_messages()
 					break;
 				}
 
+				case MAVLINK_MSG_ID_DEBUG_VECT:
+				{
+					//printf("MAVLINK_MSG_ID_DEBUG_VECT\n");
+					mavlink_msg_debug_vect_decode(&message, &(current_messages.debug_vect));
+					current_messages.time_stamps.debug_vect = get_time_usec();
+					this_timestamps.debug_vect = current_messages.time_stamps.debug_vect;
+					break;
+				}
+
 				default:
 				{
 					// printf("Warning, did not handle message id %i\n",message.msgid);

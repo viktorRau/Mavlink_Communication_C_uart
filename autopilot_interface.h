@@ -151,6 +151,7 @@ struct Time_Stamps
 	uint64_t position_target_global_int;
 	uint64_t highres_imu;
 	uint64_t attitude;
+	uint64_t debug_vect;
 	//uint64_t EKF_Matrix;
 	//uint64_t EKF_Position;
 
@@ -167,6 +168,7 @@ struct Time_Stamps
 		position_target_global_int = 0;
 		highres_imu = 0;
 		attitude = 0;
+		debug_vect = 0;
 	//	EKF_Matrix = 0;
 	//  EKF_Position = 0;
 	}
@@ -210,6 +212,9 @@ struct Mavlink_Messages {
 
 	// Attitude
 	mavlink_attitude_t attitude;
+
+	//debug_vect
+	mavlink_debug_vect_t debug_vect;
 
 	// System Parameters?
    //mavlink_EKF_Matrix EKF_Matrix;
