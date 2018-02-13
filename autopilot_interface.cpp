@@ -394,19 +394,28 @@ read_messages()
 
 				case MAVLINK_MSG_ID_DEBUG_VECT:
 				{
-					//printf("MAVLINK_MSG_ID_DEBUG_VECT\n");
-					mavlink_msg_debug_vect_decode(&message, &(current_messages.debug_vect));
-					current_messages.time_stamps.debug_vect = get_time_usec();
-					this_timestamps.debug_vect = current_messages.time_stamps.debug_vect;
+					printf("MAVLINK_MSG_ID_DEBUG_VECT\n");
+					mavlink_msg_debug_vect_decode(&message, &(current_messages.DEBUG_VEC));
+					current_messages.time_stamps.DEBUG_VEC = get_time_usec();
+					this_timestamps.DEBUG_VEC = current_messages.time_stamps.DEBUG_VEC;
 					break;
 				}
 
 				case MAVLINK_MSG_ID_DEBUG:
 				{
-					//printf("MAVLINK_MSG_ID_DEBUG\n");
+					printf("MAVLINK_MSG_ID_DEBUG\n");
 					mavlink_msg_debug_decode(&message, &(current_messages.debug));
 					current_messages.time_stamps.debug = get_time_usec();
 					this_timestamps.debug = current_messages.time_stamps.debug;
+					break;
+				}
+
+				case MAVLINK_MSG_ID_VFR_HUD:
+				{
+					//printf("MAVLINK_MSG_ID_VFR_HUD\n");
+					mavlink_msg_vfr_hud_decode(&message, &(current_messages.vfr_hud));
+					current_messages.time_stamps.vfr_hud = get_time_usec();
+					this_timestamps.vfr_hud = current_messages.time_stamps.vfr_hud;
 					break;
 				}
 
