@@ -218,12 +218,14 @@ commands_EKF_Position(Autopilot_Interface &api)
 
 
 	int i=0;
+	int run_counter = 1;
 	while (i<1)		//Read EKF Data in the loop
 
     //for (int j=0; j<100; j++) //read j-times the EKF.txt file and tries to send it via mavlink
                              //sometimes it needs more time to send the data than to read it so it could
                              //be that it sends less times than it reads the data
     {
+	run_counter = run_counter +1;
 
 
 
@@ -290,7 +292,7 @@ commands_EKF_Position(Autopilot_Interface &api)
                  yaw_file.open("YAW_wpdes_vehpos.txt");
                         if(yaw_file.is_open()){
                         //yaw_file<<"\t"<<(double)att.yaw<< ","<< (double)debug_vec.x<< ","<< (double)debug_vec.y;
-                        yaw_file<<(double)att.yaw<< ","<< (double)set_point.vx/100<<","<<(double)set_point.vy/100<<","<<EKF_Data[0]/1000<<","<<EKF_Data[1]/1000;
+                        yaw_file<<(double)att.yaw<< ","<< (double)set_point.vx/100<<","<<(double)set_point.vy/100<<","<<EKF_Data[0]/1000<<","<<EKF_Data[1]/1000<<","<<run_counter;
                         yaw_file.close();
                         }
 
